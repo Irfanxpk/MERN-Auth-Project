@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 dotenv.config();
 const app = express();
 import userRoutes from './routes/user.routes.js';
-
+import authRoutes from './routes/auth.route.js';
+app.use(express.json())
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
@@ -19,4 +20,5 @@ app.listen(3000, () => {
 });
 
 app.use('/api/user', userRoutes);
+app.use('/api/auth', authRoutes)
 
