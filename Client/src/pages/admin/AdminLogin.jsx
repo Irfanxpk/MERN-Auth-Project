@@ -1,45 +1,35 @@
-import  { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { adminSignInSuccess, adminSignInFailure } from '../../redux/admin/adminSlice.js';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { adminSignInStart } from "../../redux/admin/adminSlice";
 
 const AdminLogin = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
-    const dispatch = useDispatch();
-    const navigate = useNavigate()
-
-    const handleSignIn = () => {
-        // Validate username and password (this is a simple example, you might want to use more secure methods)
-        if (username == "admin" )
-        {
-            // Dispatch action to update admin authentication state upon successful login
-            dispatch(adminSignInSuccess({ username: 'admin' }));
-            navigate('/')
-        } else
-        {
-            // Dispatch action to update admin authentication state upon login failure
-            dispatch(adminSignInFailure('Invalid username or password'));
-            setError('Invalid username or password');
-        }
-    };
-
-    return (
-        <div>
-            <h2>Admin Login</h2>
-            <div>
-                <label>Username: </label>
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-            </div>
-            <div>
-                <label>Password: </label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <button onClick={handleSignIn}>Sign In</button>
-            {error && <div>{error}</div>}
-        </div>
-    );
-}
+ 
+  return (
+    <div className="p-3 max-w-lg mx-auto">
+      <h1 className="text-3xl text-center font-semibold my-7">Sign In</h1>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <input
+          className="bg-slate-100 p-3 rounded-lg"
+          type="email"
+          placeholder="Email here"
+          onChange={handleChange}
+        />
+        <input
+          type="password"
+          className="bg-slate-100 p-3 rounded-lg"
+          id="password"
+          placeholder="Password"
+          onChange={handleChange}
+        />
+        <button
+          className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+          type="submit"
+        >
+          Sign in
+        </button>
+      </form>
+    </div>
+  );
+};
 
 export default AdminLogin;

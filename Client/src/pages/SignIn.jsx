@@ -12,6 +12,7 @@ const SignIn = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  console.log(loading, error);
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {

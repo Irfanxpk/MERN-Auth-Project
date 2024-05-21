@@ -1,6 +1,7 @@
 import {  Route, Routes } from 'react-router-dom'
 
 import AdminHome from '../pages/admin/AdminHome'
+import AdminLogin from '../pages/admin/AdminLogin'
 
 const AdminRoute = () => {
     return (
@@ -8,7 +9,8 @@ const AdminRoute = () => {
             <Routes>
                
                     <Route path="/" element={<AdminHome />} />
-
+                    <Route path="/login" element={<AdminLogin  />} />
+                        
             
              
             </Routes>
