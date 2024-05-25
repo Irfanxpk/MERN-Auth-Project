@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     is_Admin: {
         type: Boolean,
         default: false,
+    },
+    isBlocked: {
+        type: Boolean,
+        default: false,
     }
 }, { timestamps: true });
 

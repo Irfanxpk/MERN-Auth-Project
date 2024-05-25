@@ -3,17 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import EditUserModal from './EditUserModal';
 import AddUserModal from './AddUserModal';
 import { useDispatch } from 'react-redux';
-import {signOut} from "../../redux/user/userSlice.js";
+import { deleteUserStart, deleteUserSuccess, deleteUserFailure, signOut } from "../../redux/user/userSlice.js";
 
 const Dashboard = () => {
-  const dispatch =  useDispatch()
+  const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [fetchd,setfetchd]=useState(false) 
+  const [fetchd, setfetchd] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,9 +37,15 @@ const Dashboard = () => {
       }
     };
     setfetchd(false);
-
     fetchUsers();
   }, [fetchd]);
+
+  useEffect(() => {
+    if (!loading && users.length > 0)
+    {
+      setFilteredUsers(users);
+    }
+  }, [users, loading]);
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
@@ -55,12 +63,73 @@ const Dashboard = () => {
   };
 
   const handleAddUser = (newUser) => {
-    // setUsers((prevUsers) => {
-    //   return [...prevUsers, newUser];
-    // });
     setfetchd(true);
     setIsAddModalOpen(false);
-    // setfetchd(false)
+  };
+
+  const handleSignOut = async () => {
+    try
+    {
+      await fetch('/api/auth/signout');
+      dispatch(signOut());
+    } catch (error)
+    {
+      console.log(error);
+    }
+  };
+
+  const handleToggleBlockUser = async (userId, isBlocked) => {
+    try
+    {
+      const response = await fetch(`/api/admin/users/${userId}/${isBlocked ? 'unblock' : 'block'}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isBlocked: !isBlocked }),
+      });
+
+      if (!response.ok)
+      {
+        throw new Error('Failed to toggle user block status');
+      }
+      setfetchd(true);
+    } catch (error)
+    {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try
+    {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${userId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success === false)
+      {
+        setfetchd(true)
+        return;
+      }
+
+      setfetchd(true);
+    } catch (error)
+    {
+      console.log(error)
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+
+    const filtered = users.filter(user =>
+      user.username.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query)
+    );
+    setFilteredUsers(filtered);
   };
 
   if (loading)
@@ -72,16 +141,6 @@ const Dashboard = () => {
   {
     return <div>Error: {error}</div>;
   }
-  const handleSignOut = async () => {
-    try
-    {
-      await fetch('/api/auth/signout');
-      dispatch(signOut());
-    } catch (error)
-    {
-      console.log(error);
-    }
-  };
 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -102,7 +161,14 @@ const Dashboard = () => {
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
               </svg>
             </div>
-            <input type="text" id="table-search-users" className="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for users" />
+            <input
+              type="text"
+              id="table-search-users"
+              className="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Search for users"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </div>
         </div>
         <div>
@@ -118,12 +184,12 @@ const Dashboard = () => {
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
             <th scope="col" className="px-6 py-3">Name</th>
-            <th scope="col" className="px-6 py-3 text-center" colSpan={2}>Actions</th>
+            <th scope="col" className="px-6 py-3 text-center" colSpan={3}>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {users.filter(user => !user.is_Admin).length > 0 ? (
-            users.filter(user => !user.is_Admin).map((user) => (
+          {filteredUsers.filter(user => !user.is_Admin).length > 0 ? (
+            filteredUsers.filter(user => !user.is_Admin).map((user) => (
               <tr key={user._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
                   <img className="w-10 h-10 rounded-full" src={user.profilePicture} alt={`${user.username}'s profile`} />
@@ -136,7 +202,15 @@ const Dashboard = () => {
                   <button onClick={() => handleEditUser(user)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit user</button>
                 </td>
                 <td className="px-6 py-4">
-                  <button onClick={() => navigate(`/deleteUser/${user._id}`)} className="font-medium text-red-600 dark:text-red-500 hover:underline">Delete User</button>
+                  <button onClick={() => handleDeleteUser(user._id)} className="font-medium text-red-600 dark:text-red-500 hover:underline">Delete User</button>
+                </td>
+                <td className="px-6 py-4">
+                  <button
+                    onClick={() => handleToggleBlockUser(user._id, user.isBlocked)}
+                    className={`font-medium text-${user.isBlocked ? 'green' : 'red'}-600 dark:text-${user.isBlocked ? 'green' : 'red'}-500 hover:underline`}
+                  >
+                    {user.isBlocked ? 'Unblock User' : 'Block User'}
+                  </button>
                 </td>
               </tr>
             ))
@@ -151,7 +225,7 @@ const Dashboard = () => {
         <EditUserModal
           user={selectedUser}
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={() => { setIsEditModalOpen(false); setSelectedUser(null)}}
           onUserUpdate={handleUserUpdate}
         />
       )}

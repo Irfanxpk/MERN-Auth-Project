@@ -71,3 +71,38 @@ export const updateUser = async (req, res, next) => {
         next(error);
     }
 };
+
+export const blockUser = async (req, res) => {
+    try
+    {
+        console.log("asdfasdf");
+        const user = await User.findById(req.params.id);
+        if (!user)
+        {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        user.isBlocked = true;
+        await user.save();
+        res.json({ success: true, user });
+    } catch (error)
+    {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const unblockUser = async (req, res) => {
+    try
+    {
+        const user = await User.findById(req.params.id);
+        if (!user)
+        {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        user.isBlocked = false;
+        await user.save();
+        res.json({ success: true, user });
+    } catch (error)
+    {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
